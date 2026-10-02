@@ -1,0 +1,159 @@
+\section{Bibliotecas y desarrollo práctico}
+\subsection{Función del código en la investigación}
+El código transforma la propuesta teórica en un procedimiento ejecutable. Lee los textos, construye ejemplos, define las redes, ajusta parámetros, calcula métricas y produce sugerencias. Su función no es acompañar el informe como un archivo adicional sin relación con las conclusiones: las cifras locales proceden de su ejecución.
+
+El programa principal se llama \texttt{pln.py}. Sus funciones se agrupan según la tarea que realizan. Otros archivos permiten ejecutar la comparación completa, utilizar la demo, comprobar propiedades del programa y generar tablas y figuras. Separar esas actividades evita mezclar el uso cotidiano de la demo con un entrenamiento que modifica modelos o una evaluación que genera resultados.
+
+Para comprender el trabajo no es necesario memorizar todas las instrucciones de Python. Sí es necesario identificar las entradas y salidas de cada etapa, explicar por qué se ejecuta y localizar el resultado que produce. Por ejemplo, la preparación recibe texto y produce matrices; el entrenamiento recibe esas matrices y produce parámetros ajustados; la inferencia recibe un contexto y utiliza esos parámetros para generar sugerencias.
+
+\subsection{PyTorch}
+PyTorch es la biblioteca que ejecuta las operaciones de la red. Su estructura básica de datos es el tensor, una colección numérica que puede tener una o varias dimensiones. En el proyecto, una matriz de identificadores de palabras es un tensor de dos dimensiones y el conjunto de vectores de un lote es un tensor de tres dimensiones.
+
+La biblioteca permite definir capas y combinarlas dentro de una clase. La clase del proyecto hereda de \texttt{nn.Module}, que organiza los componentes del modelo y sus parámetros. El método \texttt{forward} describe los cálculos que convierten una entrada en una salida. Cuando se llama al modelo durante entrenamiento o evaluación, se ejecuta ese método.
+
+\texttt{nn.Embedding} consulta el vector de 48 valores correspondiente a cada identificador. \texttt{nn.RNN} procesa esos vectores mediante recurrencia simple y \texttt{nn.LSTM} utiliza la celda y las compuertas descritas. El código elige una u otra capa según el argumento de arquitectura, mientras que el resto de componentes permanece común.
+
+\texttt{nn.Linear} calcula las 3000 puntuaciones finales a partir de los 64 valores del estado seleccionado. \texttt{nn.Dropout} aplica la regularización durante entrenamiento. La función de entropía cruzada calcula la pérdida, la diferenciación automática obtiene gradientes y el optimizador Adam actualiza parámetros. Por ello, utilizar PyTorch evita programar manualmente cada derivada, pero no elimina la responsabilidad de definir correctamente datos, objetivo y evaluación.
+
+La versión ejecutada es PyTorch 2.14.0+cpu. El sufijo indica la distribución usada para CPU. Se documenta la versión porque el comportamiento de serialización, los cálculos disponibles y otros detalles técnicos pueden cambiar entre versiones. El número de versión no constituye una métrica de calidad del modelo.
+
+\subsection{NumPy}
+NumPy se utiliza para organizar y almacenar los ejemplos antes de pasarlos a PyTorch. Maneja arreglos numéricos, que son colecciones de valores con una forma definida. En la preparación se crean arreglos de contextos, objetivos, longitudes y posiciones originales. Tenerlos separados permite comprobar qué palabra corresponde a cada contexto.
+
+La selección de objetivos utiliza un generador de números pseudoaleatorios con semilla fija. Esto hace posible reconstruir la misma muestra a partir del mismo corpus y procedimiento. NumPy también se utiliza para construir y consultar la matriz de conteos del bigrama y para resumir mediciones como la latencia.
+
+Los arreglos preparados se almacenan en archivos comprimidos con extensión \texttt{.npz}. No son documentos que deban leerse manualmente. El código los carga y consulta sus campos. La extensión identifica una forma de guardar datos; no significa que exista una nueva fuente bibliográfica ni un nuevo algoritmo dentro de ese archivo.
+
+\subsection{Matplotlib}
+Matplotlib genera las figuras a partir de los resultados almacenados. En la comparación de modelos representa las medias y la variación entre semillas. En las curvas de aprendizaje muestra la pérdida de validación de cada época. La biblioteca no entrena los modelos ni decide cuál es mejor: presenta valores que ya fueron calculados.
+
+Esta separación permite regenerar una gráfica sin repetir entrenamiento. Si cambia su tamaño, tipografía o distribución visual, no tienen por qué cambiar los números. La información que se compara permanece en los JSON y CSV de resultados. Las figuras del informe se interpretan junto con sus ejes, unidades y notas sobre el número de repeticiones.
+
+\subsection{Biblioteca estándar de Python}
+La biblioteca estándar proporciona herramientas incluidas en Python. \texttt{re} aplica la regla de tokenización; \texttt{unicodedata} normaliza caracteres; \texttt{Counter} cuenta frecuencias; \texttt{hashlib} calcula la huella documental; y \texttt{pathlib} administra rutas de archivos. Estas herramientas realizan tareas de preparación y organización, no aprendizaje neuronal.
+
+\texttt{json} guarda configuraciones y resultados con nombres de campo; \texttt{csv} permite exportar una tabla legible en diferentes programas; \texttt{time} mide duración; y \texttt{unittest} organiza pruebas automatizadas. Su presencia permite conservar evidencia y revisar el procedimiento. No deben confundirse los registros generados por estas herramientas con las publicaciones citadas en el marco teórico.
+
+\subsection{Lectura y transformación de una oración}
+El recorrido comienza en \texttt{corpus\_records}. Esta función verifica que estén presentes los archivos esperados y lee las oraciones junto con sus identificadores. Para cada texto llama a \texttt{tokens}, que aplica las reglas de normalización. El resultado de esta etapa es una lista de palabras normalizadas asociada a un documento y una oración.
+
+Después, \texttt{prepare} elimina repeticiones exactas y asigna cada documento a entrenamiento, validación o prueba. Construye la lista de vocabulario con entrenamiento y transforma cada palabra en su identificador. Cuando una forma no está en la lista, utiliza UNK. Esta misma correspondencia debe conservarse para evaluar y usar el modelo.
+
+Para cada posición de una oración, la función crea el contexto anterior y el objetivo. El contexto se recorta a la longitud máxima necesaria y se completa con PAD cuando es corto. También se almacena la longitud real. Finalmente se seleccionan los objetivos de entrenamiento y se guardan las matrices. Este orden es importante: separar por documento y construir el vocabulario sin prueba evita incorporar información reservada de manera inadvertida.
+
+\subsection{Formas de los datos}
+La forma de un arreglo indica cuántos elementos posee en cada dimensión. Supóngase un lote de 512 ejemplos con contexto doce. La entrada tiene 512 filas y 12 columnas de identificadores. Tras consultar el embedding, cada posición contiene un vector de 48 valores, de modo que la forma pasa a 512 por 12 por 48.
+
+La capa recurrente produce un estado de 64 valores para cada posición. Por ello, su salida tiene forma 512 por 12 por 64. El programa selecciona un estado por ejemplo, correspondiente a su última posición real, y obtiene una matriz de 512 por 64. La proyección final produce 512 por 3000 puntuaciones: una distribución pendiente de normalizar para cada ejemplo.
+
+\begin{table*}[tb]
+\caption{Recorrido de tamaños para un lote completo de la comparación principal.}
+\centering
+\begin{tabular}{p{.24\textwidth}p{.21\textwidth}p{.43\textwidth}}
+\toprule Etapa & Forma & Significado\\\midrule
+Identificadores & $512\times12$ & 512 ejemplos, cada uno con espacio para doce elementos.\\
+Embedding & $512\times12\times48$ & Cada identificador se sustituye por 48 valores.\\
+Salida recurrente & $512\times12\times64$ & Cada paso produce un estado de 64 valores.\\
+Último estado real & $512\times64$ & Se toma un solo estado por ejemplo.\\
+Proyección al vocabulario & $512\times3000$ & Cada ejemplo recibe una puntuación por entrada.\\
+Objetivos & $512$ & Un identificador esperado para cada ejemplo.\\\bottomrule
+\end{tabular}
+\end{table*}
+
+Estas cantidades describen un lote completo. El último puede tener menos de 512 ejemplos y los contextos reales pueden contener menos de doce elementos. La matriz conserva el tamaño de ventana mediante relleno, pero la longitud real indica qué posición usar. Entender esta diferencia evita afirmar que cada ejemplo contiene exactamente doce palabras tomadas del texto.
+
+\subsection{Definición de la red en código}
+La arquitectura se configura mediante cuatro componentes principales:
+\begin{lstlisting}[language=Python]
+self.embedding = nn.Embedding(
+    vocab_size, embedding, padding_idx=PAD)
+recurrent = nn.LSTM if kind == 'lstm' else nn.RNN
+self.recurrent = recurrent(
+    embedding, hidden, batch_first=True)
+self.dropout = nn.Dropout(0.15)
+self.output = nn.Linear(hidden, vocab_size)
+\end{lstlisting}
+La primera instrucción define la tabla de representaciones. El argumento \texttt{padding\_idx} identifica la entrada de relleno. La selección de \texttt{recurrent} cambia únicamente la familia recurrente. \texttt{batch\_first=True} indica que la primera dimensión de los datos corresponde al lote. El dropout y la capa lineal se sitúan después del procesamiento recurrente.
+
+La clase no incluye una segunda capa recurrente ni procesamiento bidireccional. La dirección única es coherente con siguiente palabra, porque una consulta real no dispone de palabras que todavía no se han escrito. Añadir una red que utilice contexto posterior requeriría formular otra tarea o impedir que esa información llegue al modelo evaluado.
+
+\subsection{Selección de la última posición válida}
+El cálculo principal incluye las siguientes instrucciones:
+\begin{lstlisting}[language=Python]
+values, _ = self.recurrent(self.embedding(x))
+last = values[
+    torch.arange(x.shape[0], device=x.device),
+    lengths - 1
+]
+logits = self.output(self.dropout(last))
+\end{lstlisting}
+\texttt{x} contiene identificadores; \texttt{values} contiene los estados de todas las posiciones; y \texttt{lengths} conserva la longitud real de cada ejemplo. Los índices comienzan en cero. Si una entrada tiene cuatro elementos reales, su último índice es tres; de ahí la expresión \texttt{lengths - 1}.
+
+El primer índice selecciona una fila por ejemplo y el segundo selecciona su posición final real. Esa operación produce el conjunto de estados que se envía a la salida. Si se utilizara siempre la última columna de la matriz, algunos ejemplos tomarían un estado calculado sobre relleno y la definición de la predicción sería distinta.
+
+\subsection{Cálculo de pérdida y actualización}
+El entrenamiento procesa lotes siguiendo este orden:
+\begin{lstlisting}[language=Python]
+optimizer.zero_grad(set_to_none=True)
+logits = model(x, lengths)
+loss = nn.functional.cross_entropy(logits, y)
+loss.backward()
+nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+optimizer.step()
+\end{lstlisting}
+La primera instrucción limpia los gradientes de la actualización anterior. Después se calculan puntuaciones y pérdida. \texttt{backward} obtiene los gradientes de los parámetros a partir de esa pérdida. El recorte limita valores excesivos y \texttt{step} aplica la regla del optimizador. La secuencia no modifica directamente palabras de los documentos, sino los valores internos de la red.
+
+\texttt{y} contiene los identificadores objetivo. La pérdida evalúa las puntuaciones respecto a esos objetivos. No se calculan gradientes durante la evaluación de validación, porque sus ejemplos no deben ajustar pesos. Esta distinción entre usar una respuesta para medir y usarla para actualizar es esencial para comprender la separación de conjuntos.
+
+\subsection{Selección y almacenamiento del modelo}
+Después de cada época se calcula la pérdida de validación. Si es menor que la mejor observada, se guarda un archivo con los parámetros actuales. Ese archivo también contiene la arquitectura, configuración, época seleccionada y vocabulario. El conjunto se denomina checkpoint: una versión guardada que puede recuperarse para inferencia.
+
+Guardar el vocabulario es necesario porque los pesos dependen de la correspondencia entre palabras e identificadores. Si se cargaran los mismos pesos con otra lista de palabras, un identificador podría representar algo distinto y las sugerencias dejarían de corresponder al aprendizaje realizado. El modelo y su vocabulario deben mantenerse asociados.
+
+Cada ejecución tiene un nombre que informa arquitectura, contexto y semilla. Por ejemplo, \texttt{lstm\_c12\_s29} identifica una LSTM con contexto doce y semilla 29. La parte \texttt{s29} no indica una puntuación de calidad: solo identifica la inicialización. Los resúmenes permiten consultar su pérdida de validación para seleccionar la demo sin mirar qué archivo obtuvo mejor resultado de prueba.
+
+\subsection{Referencia de bigramas}
+Un bigrama utiliza dos palabras consecutivas: la anterior y la que se quiere predecir. El modelo de referencia cuenta cuántas veces cada palabra sigue a otra en los objetivos seleccionados. Con estos conteos estima una distribución. Su contexto es más corto que el de las redes, pero permite establecer una comparación con un procedimiento fácil de interpretar.
+
+Algunas parejas pueden no aparecer en entrenamiento. Si se asignara probabilidad cero a toda pareja no observada, la pérdida de una continuación nueva sería problemática. Por eso se aplica suavizado: se combina el conteo de la pareja con una distribución general de frecuencia de palabras. De esa forma se reserva probabilidad para continuaciones no vistas después de ese contexto.
+
+El peso de esa distribución general se denomina alfa. Se comparan los valores 1, 10 y 100 sobre validación y se selecciona el que tiene menor pérdida. El valor elegido es 100. El procedimiento utiliza la misma regla de separación que las redes: prueba se reserva para la medición final y no para escoger alfa.
+
+\subsection{Cuantificación de la pérdida}
+La pérdida utilizada se denomina logaritmo negativo de la probabilidad, abreviado NLL al informar su media. Penaliza que la palabra real reciba poca probabilidad. Para un ejemplo, una probabilidad más alta de la respuesta produce menor pérdida. Al informar el conjunto, se suman las pérdidas de todos los objetivos y se divide por su cantidad:
+\begin{equation}\label{eq:nll_nueva}
+\mathrm{NLL}=-\frac{1}{N}\sum_{i=1}^{N}\log(p_i).
+\end{equation}
+Aquí $N$ es el número de objetivos evaluados, $p_i$ es la probabilidad asignada al objetivo del ejemplo $i$, $\log$ es el logaritmo natural y $\sum$ indica suma. El signo menos hace que una probabilidad inferior a uno se convierta en una pérdida no negativa. La ecuación se refiere a la palabra real de cada ejemplo, no a la suma de probabilidades de las cinco sugerencias.
+
+En un ejemplo didáctico, asignar probabilidad 0.5 al objetivo produce pérdida aproximada de 0.693; asignarle 0.1 produce aproximadamente 2.303. La segunda es mayor porque el modelo concedió menos probabilidad a la respuesta. No se puede interpretar NLL como porcentaje de errores: es otra escala que mide la distribución de probabilidades.
+
+\subsection{Perplejidad}
+La perplejidad se obtiene aplicando la exponencial a la NLL media:
+\begin{equation}\label{eq:ppl_nueva}
+\mathrm{PPL}=\exp(\mathrm{NLL}).
+\end{equation}
+Cuando se evalúan los mismos datos con la misma representación, una perplejidad menor indica mejor asignación de probabilidad a los objetivos. No significa directamente ``porcentaje correcto''. Un valor 75.60 no quiere decir que el modelo acierte el 75.60\% de palabras ni que siempre elija entre exactamente 75.60 opciones.
+
+La perplejidad depende del vocabulario y de la tokenización. En el proyecto, los objetivos desconocidos se representan mediante UNK. Asignar probabilidad a esa categoría puede mejorar la pérdida, aunque el programa no identifique la palabra original. Por ello, se acompaña la perplejidad con aciertos léxicos y con la tasa de desconocidas.
+
+\subsection{Acierto top-1 y top-5}
+Top-1 mide cuántas veces la palabra objetivo conocida ocupa el primer lugar de la distribución. Top-5 mide cuántas veces aparece entre los primeros cinco lugares. El término ``léxico'' aclara que acertar UNK no cuenta como identificar una palabra real. Se conserva el total de posiciones como denominador, incluso cuando el objetivo es desconocido.
+
+Un ejemplo didáctico permite distinguirlos. Si la palabra real es ``gobierno'' y ocupa el tercer lugar, ese ejemplo falla en top-1 y acierta en top-5. Si la palabra real se convirtió en UNK, no se cuenta como acierto léxico aunque UNK ocupe el primer lugar. La regla evita presentar como reconocimiento exacto de una palabra lo que solo es una categoría compartida.
+
+La métrica top-5 se calcula antes de ocultar UNK. Por tanto, UNK puede ocupar uno de los cinco lugares sin generar un acierto. La demo muestra cinco entradas después de retirar señales técnicas. Son dos listas con reglas distintas. La cifra publicada corresponde al procedimiento de evaluación descrito y no debe presentarse como medición exacta de aceptación de las cinco opciones visibles.
+
+\subsection{Demostración de autocompletado}
+La demo selecciona la LSTM con menor pérdida de validación entre las ejecuciones finales. En los registros corresponde a \texttt{lstm\_c12\_s29.pt}. Se utiliza una LSTM para mostrar la arquitectura central del tema, sin ocultar que el promedio de la RNN obtuvo mejores métricas en el experimento.
+
+La persona introduce un contexto. El programa aplica las mismas reglas de normalización, consulta identificadores, antepone la señal de inicio cuando corresponde y conserva los últimos elementos hasta el límite del modelo. Después calcula las probabilidades, ordena las entradas y muestra cinco sugerencias sin PAD, BOS ni UNK. También enumera las palabras desconocidas de la entrada e informa la probabilidad de UNK.
+
+Las probabilidades mostradas no se vuelven a ajustar para sumar cien entre las cinco sugerencias. Se mantienen sus valores dentro de la distribución original. Esta decisión comunica que existen otras continuaciones posibles y evita aparentar una confianza mayor. Si aparece \texttt{<num>}, debe interpretarse como categoría numérica y no como una cifra concreta lista para insertar.
+
+\subsection{Verificaciones realizadas}
+Se ejecutaron ocho pruebas de integridad. Comprueban la normalización de ejemplos conocidos, la ausencia de documentos compartidos entre conjuntos, la correspondencia entre contextos y objetivos, la invariancia de la predicción ante relleno posterior, el tratamiento de UNK, la suma de probabilidades del bigrama y dos formas de guardar y recuperar modelos.
+
+La prueba de correspondencia revisa cien posiciones distribuidas de validación y compara cada ventana con la oración original. La prueba de relleno comprueba ambas arquitecturas. Las pruebas de carga verifican que recuperar parámetros conserve las salidas. Estos controles no demuestran que cualquier posible entrada esté libre de errores, pero sí verifican propiedades directamente relacionadas con la tarea.
+
+Además de las pruebas aisladas, se realizaron los diez entrenamientos y la evaluación completa, y se ejecutó la demo. Esas actividades comprueban recorridos distintos del programa. Un resultado de pruebas correcto no sustituye las mediciones de calidad del modelo, del mismo modo que una buena métrica no garantiza por sí sola que todas las funciones de archivo estén correctamente implementadas.

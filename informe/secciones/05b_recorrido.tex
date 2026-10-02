@@ -1,0 +1,61 @@
+\section{Recorrido completo de una predicción}
+\subsection{Entrada y preparación}
+Para relacionar los componentes, se considera la entrada real de demostración ``el presidente del gobierno''. El programa recibe una cadena de caracteres escrita por la persona. Todavía no es un tensor ni contiene probabilidades. La función de tokenización devuelve cuatro palabras: ``el'', ``presidente'', ``del'' y ``gobierno''. En este caso, todas están presentes en el vocabulario utilizado.
+
+La lista de palabras se convierte en identificadores mediante la lista guardada junto con el modelo. El programa añade la señal de inicio, de modo que la secuencia contiene cinco elementos. Como cinco es menor que el contexto máximo de doce, no necesita eliminar elementos anteriores. En la demo se procesa esa longitud directamente; el relleno se necesita principalmente cuando se organizan varios ejemplos de longitudes distintas en un lote.
+
+Este primer paso puede cambiar en otra consulta. Si la entrada contiene una palabra fuera del vocabulario, su identificador será UNK. Si contiene un número, se utilizará la categoría numérica después de normalizarlo. Si contiene más elementos que el máximo, se conservarán los últimos. Las tres situaciones modifican qué información numérica recibe realmente la red, aunque la persona vea su texto completo en la terminal.
+
+\subsection{Consulta de representaciones}
+Cada identificador consulta una fila de la tabla de embedding. En el ejemplo se obtienen cinco vectores de 48 valores. Esos valores no se seleccionan manualmente para esta frase; son parte de los parámetros aprendidos y guardados. La consulta a la tabla mantiene el orden de la lista, porque el orden será utilizado por la capa recurrente.
+
+La existencia de un vector por palabra no basta para predecir una continuación. Aún falta combinar la información de la secuencia. Si se ignorara el orden, se perdería una característica importante del problema. La capa recurrente recibe los vectores en la secuencia definida y actualiza su estado para cada uno.
+
+\subsection{Procesamiento con LSTM}
+La LSTM empieza con estado y celda iniciales en cero. Lee primero BOS y luego las cuatro palabras. En cada posición calcula compuertas, candidato, celda y estado oculto. Las operaciones son las mismas en todas las posiciones, pero sus valores cambian porque cambian la entrada y los estados previos.
+
+Al terminar, el estado oculto de la última posición resume numéricamente la información que la red consiguió conservar de esa entrada. Tiene 64 valores. No contiene todavía cinco palabras sugeridas. La capa final debe convertirlo en una puntuación por entrada del vocabulario. Confundir estos estados con la lista de salida impediría explicar dónde interviene la memoria y dónde se calcula la distribución.
+
+\subsection{Puntuaciones, probabilidades y orden}
+La proyección final produce 3000 puntuaciones. Las posiciones de PAD y BOS se restringen porque no corresponden a palabras objetivo. La distribución conserva UNK, que representa la posibilidad interna de una palabra fuera del vocabulario. Softmax convierte las puntuaciones en probabilidades y el programa las ordena de mayor a menor.
+
+Después se construye la lista visible retirando las señales técnicas. Se conservan cinco entradas y sus probabilidades originales. Para esta consulta, la primera palabra visible es ``de''. Su probabilidad de aproximadamente 13.77\% no significa que los otros candidatos sean imposibles. Tampoco significa que el sistema conozca la frase que la persona iba a escribir.
+
+La suma de las cinco probabilidades visibles es aproximadamente 28.06\%. La probabilidad de UNK es aproximadamente 10.61\%. El resto de la probabilidad se reparte entre otras entradas del vocabulario. Esta distribución explica por qué no debe esperarse una suma de cien al observar solo cinco sugerencias.
+
+\subsection{Qué ocurre al aceptar una sugerencia}
+El programa de demostración presenta una lista, pero no inserta automáticamente una palabra en un editor. Si una persona decide añadir ``de'' y consulta de nuevo el contexto ampliado, la siguiente ejecución procesará ese texto como una entrada nueva. No recuperará una celda oculta de la consulta anterior, porque el estado se reinicia.
+
+Repetir ese procedimiento permite construir una secuencia de sugerencias, pero el experimento no evaluó generación extensa mediante aceptación automática. Durante la evaluación cuantitativa, los contextos proceden de oraciones reales. Si se utilizan palabras generadas por el propio sistema, un error temprano puede influir en los pasos siguientes. No se atribuye a la demo una capacidad de generación prolongada que no fue medida.
+
+\subsection{Comparación con el recorrido del bigrama}
+Para la misma entrada, el bigrama utiliza únicamente la última palabra, ``gobierno''. Consulta los conteos de las palabras que siguieron a ese identificador entre los objetivos de entrenamiento y los combina con la distribución general de palabras. No mantiene un estado oculto, no consulta una celda y no utiliza directamente ``el presidente del'' para calcular esa predicción.
+
+Esta diferencia muestra qué aporta el contexto en términos de información disponible. La red puede utilizar varios elementos; el bigrama solo utiliza el anterior. Sin embargo, una red puede no aprovechar completamente esa información adicional. Por eso se realizan mediciones en lugar de deducir su calidad únicamente a partir de la longitud del contexto.
+
+\subsection{Por qué se eligió el bigrama con alfa cien}
+El criterio registrado fue escoger el valor de alfa con menor pérdida de validación. Los tres valores ensayados produjeron los resultados siguientes:
+\begin{table*}[tb]
+\caption{Selección del suavizado del bigrama sobre validación, no sobre prueba.}
+\centering
+\begin{tabular}{rrrrr}
+\toprule Alfa & NLL & Perplejidad & Top-1 (\%) & Top-5 (\%)\\\midrule
+1 & 4.858 & 128.76 & 6.97 & 26.60\\
+10 & 4.546 & 94.25 & 6.33 & 26.53\\
+100 & 4.446 & 85.26 & 2.95 & 25.58\\\bottomrule
+\end{tabular}
+\end{table*}
+
+El valor cien obtuvo la menor pérdida y fue seleccionado. No obtuvo el mayor top-1 ni el mayor top-5 de validación. Esta observación es importante: el procedimiento optimizó un criterio concreto de probabilidad y no una combinación indefinida de todas las medidas. Elegir la fila con mejor porcentaje después de ver los resultados equivaldría a cambiar la regla de selección.
+
+La misma precaución se aplica a las redes: el checkpoint se selecciona por pérdida de validación. El objetivo de la comparación no fue encontrar el mayor top-5 posible mediante una búsqueda extensa. Fue comparar configuraciones bajo un protocolo común y previamente definido. El alcance de la conclusión debe incluir esa condición.
+
+\subsection{Cómo interpretar un cambio de configuración}
+Cambiar el vocabulario altera qué palabras son conocidas y cuántas salidas debe calcular el modelo. Cambiar el contexto altera la información que recibe cada ejemplo. Cambiar las épocas altera la cantidad de recorridos por los datos. Cambiar la semilla mantiene la configuración, pero modifica inicialización y orden. No son modificaciones equivalentes.
+
+Si se quiere estudiar una de ellas, es necesario mantener controladas las demás en la medida posible e informar exactamente qué cambió. Por ejemplo, comparar un modelo con más vocabulario y más épocas contra otro más pequeño no permite atribuir la diferencia únicamente al tipo de red. Esta regla de interpretación se aplica a la práctica y ayuda a formular mejoras futuras sin alterar el significado de sus resultados actuales.
+
+\subsection{Comprobaciones vinculadas al recorrido}
+La correspondencia entre texto e identificadores se revisa en el vocabulario. La longitud de entrada se comprueba antes de seleccionar el estado. La salida completa puede consultarse como probabilidades y la lista visible se revisa por separado. Los parámetros se recuperan del checkpoint seleccionado y los criterios de selección están en los resúmenes de entrenamiento.
+
+Cada comprobación responde a un error posible. Un vocabulario distinto cambiaría la interpretación de las entradas. Una longitud incorrecta podría seleccionar relleno. Una probabilidad renormalizada sobre cinco palabras comunicaría una distribución distinta. Una elección basada en prueba mezclaría evaluación y selección. Explicar estas relaciones permite defender el programa desde sus decisiones y no solo desde el hecho de que produce una lista en pantalla.

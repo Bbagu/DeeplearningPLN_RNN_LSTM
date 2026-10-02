@@ -1,0 +1,6 @@
+id,titulo,url,uso_previsto,estado,lectura_completa,doi_verificado,indexacion_verificada,integrante,paginas_evidencia,decision
+F01,"Fundamentals of Recurrent Neural Network (RNN) and Long Short-Term Memory (LSTM) network",https://www.sciencedirect.com/science/article/pii/S0167278919305974,"Fundamentos y ecuaciones","Ficha y resumen localizados",no,pendiente,pendiente,,,
+F02,"Learning long-term dependencies with gradient descent is difficult",https://ieeexplore.ieee.org/document/279181/,"Gradientes y dependencias largas","Registro localizado; acceso limitado",no,pendiente,pendiente,,,
+F03,"LSTM: A Search Space Odyssey",https://ieeexplore.ieee.org/document/7508408/,"Variantes y entrenamiento","Candidato; contrastar ficha editorial",no,pendiente,pendiente,,,
+F04,"A Survey of the Usages of Deep Learning for Natural Language Processing",https://ieeexplore.ieee.org/document/9075398/,"Contexto y aplicaciones","Registro localizado; acceso limitado",no,pendiente,pendiente,,,
+F05,"Supervised Sequence Labelling with Recurrent Neural Networks",https://link.springer.com/book/10.1007/978-3-642-24797-2,"Apoyo teorico; libro","Ficha editorial comprobada",no,10.1007/978-3-642-24797-2,pendiente,,,"Confirmar admisibilidad como referencia final"

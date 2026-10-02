@@ -1,0 +1,153 @@
+\section{Arquitectura RNN y memoria LSTM}
+\subsection{Funcionamiento de una RNN simple}
+Una red neuronal recurrente procesa los elementos de una secuencia en su orden. Para cada palabra combina dos entradas: la representación numérica de la palabra actual y el estado obtenido al procesar las anteriores. El resultado es un estado actualizado. Se denomina recurrente porque repite esta operación usando el estado del paso anterior.
+
+El estado oculto es una lista de valores internos de la red. La palabra ``oculto'' indica que esos valores no son directamente la palabra de entrada ni la palabra que se muestra como salida. Son resultados intermedios de los cálculos. En la práctica, el estado contiene 64 valores. Su tamaño permanece constante mientras se recorren las palabras de un contexto.
+
+Al comenzar una ventana, el estado se inicializa en cero. La primera entrada produce el primer estado; la segunda se combina con ese estado para producir otro; y el proceso continúa hasta la última posición real. La capa final utiliza ese último estado para calcular las puntuaciones del vocabulario. Por tanto, aunque se lean varias entradas, la predicción de este programa corresponde a una sola palabra siguiente.
+
+\begin{table}[tb]
+\caption{Recorrido conceptual de una RNN en un contexto didáctico.}
+\centering
+\begin{tabular}{p{.15\columnwidth}p{.29\columnwidth}p{.42\columnwidth}}
+\toprule Paso & Elemento leído & Operación conceptual\\\midrule
+1 & Inicio & Actualizar el estado inicial con la señal BOS.\\
+2 & el & Combinar su representación con el estado anterior.\\
+3 & gobierno & Actualizar con la nueva palabra y lo acumulado.\\
+4 & anunció & Obtener el estado utilizado para predecir.\\\bottomrule
+\end{tabular}
+\end{table}
+
+Esta descripción no significa que el estado copie literalmente las palabras. Cada actualización combina números aprendidos mediante operaciones matemáticas. Dos contextos distintos pueden producir estados distintos, pero el estado no es un archivo de texto que permita recuperar sin pérdida todo el prefijo. El modelo conserva la información que el entrenamiento consigue representar en ese tamaño limitado.
+
+\subsection{Ecuación de actualización}
+La actualización de una RNN simple puede representarse así:
+\begin{equation}\label{eq:rnn}
+h_t=\tanh(W_x x_t+W_h h_{t-1}+b).
+\end{equation}
+El subíndice $t$ indica la posición que se está procesando. $x_t$ es el vector de la entrada actual; $h_{t-1}$ es el estado anterior; $h_t$ es el estado actualizado; $W_x$ y $W_h$ son conjuntos de pesos aprendidos; y $b$ es un sesgo. La función $\tanh$, llamada tangente hiperbólica, transforma cada valor resultante a un intervalo entre menos uno y uno. No representa una operación geométrica sobre el texto.
+
+La expresión reúne tres contribuciones antes de aplicar esa función. Una procede de la palabra actual, otra del estado anterior y otra del sesgo. Los pesos regulan cómo se combinan las entradas. Durante entrenamiento se modifican esos pesos para que el estado final produzca una distribución más adecuada de la siguiente palabra.
+
+Los parámetros se comparten entre posiciones. No se crea una red diferente para la primera palabra y otra para la segunda. La misma operación aprendida se aplica repetidamente, cambiando sus entradas y su estado. Esta característica permite procesar contextos de diferentes longitudes sin crear un nuevo conjunto de pesos para cada longitud.
+
+La implementación de PyTorch almacena dos vectores de sesgo para la parte recurrente. En la ecuación se resumen en un único término para facilitar la lectura, porque ambos contribuyen de manera aditiva. Esa simplificación de escritura no altera el conteo real de parámetros que se obtiene del programa.
+
+\subsection{Ejemplo numérico de una actualización}
+El siguiente cálculo es didáctico y utiliza un solo valor por entrada y por estado. La red real trabaja con vectores de mayor tamaño. Supóngase una entrada $x_t=0.5$, un estado anterior $h_{t-1}=0.2$, pesos de 0.4 y 0.3, y sesgo 0.1. La suma antes de la función es $0.4(0.5)+0.3(0.2)+0.1=0.36$.
+
+Aplicar la tangente hiperbólica a 0.36 produce aproximadamente 0.345. Ese sería el nuevo estado en este ejemplo simplificado. Si cambia la entrada o el estado previo, cambia la suma y puede cambiar el nuevo estado. El ejemplo muestra por qué la predicción depende de la secuencia y no únicamente de una tabla fija de palabras.
+
+Estos valores no proceden de los pesos entrenados ni prueban el rendimiento del modelo. Su finalidad es explicar las partes de la ecuación con una operación que puede verificarse. No se debe presentar el número 0.345 como una probabilidad de palabra: es un estado intermedio, anterior a la capa de salida y a softmax.
+
+\subsection{Aprendizaje de los parámetros recurrentes}
+Durante entrenamiento, el programa conoce la palabra objetivo de cada ejemplo. Después de calcular una distribución, obtiene una pérdida que indica qué tan poca probabilidad asignó a esa palabra. A continuación calcula cómo cambia esa pérdida al modificar cada parámetro. Esa información de cambio se denomina gradiente.
+
+El gradiente no es una palabra ni una predicción adicional. Es una cantidad numérica utilizada para ajustar los parámetros. Un optimizador aplica esos ajustes siguiendo una regla. En esta práctica se utiliza Adam, disponible en PyTorch. La tasa de aprendizaje configura la escala de sus actualizaciones; se fija en 0.003 para las dos arquitecturas.
+
+En una red recurrente, los cálculos de una posición dependen de estados anteriores. Por eso, para obtener los gradientes, la operación recorre las dependencias de la secuencia en sentido inverso. Este procedimiento se conoce como retropropagación a través del tiempo. El término ``tiempo'' se refiere aquí a los pasos ordenados de la secuencia; no exige que las palabras tengan una marca horaria real.
+
+La retropropagación de esta práctica se limita a cada ventana disponible. No recorre un documento completo si el ejemplo solo contiene doce elementos. El reinicio del estado entre ejemplos es una decisión concreta de implementación y debe mantenerse separado de la posibilidad general de utilizar redes recurrentes con secuencias de mayor longitud.
+
+\subsection{Dificultad de conservar información distante}
+Cuando la influencia de una palabra debe atravesar muchas actualizaciones, la señal usada para aprender puede volverse muy pequeña o muy grande. Si se vuelve demasiado pequeña, los ajustes relacionados con posiciones lejanas pueden ser insuficientes. Si crece excesivamente, las actualizaciones pueden resultar inestables. Estos problemas se conocen como desvanecimiento y explosión del gradiente, respectivamente.
+
+Bengio, Simard y Frasconi~\cite{bengio1994} analizan la dificultad de aprender dependencias de largo plazo mediante descenso por gradiente. Una dependencia de largo plazo es una relación en la que información de posiciones anteriores influye sobre una decisión posterior, con varios elementos entre ambas. El trabajo fundamenta una dificultad del aprendizaje y no una prohibición de que una RNN pueda resolver contextos concretos.
+
+Pascanu, Mikolov y Bengio~\cite{pascanu2013} estudian los problemas de entrenamiento recurrente y el recorte de gradientes. En esta implementación, después de calcularlos, se limita su norma a un umbral de uno cuando es necesario. La norma resume el tamaño del conjunto de gradientes. El recorte evita que una actualización se base en valores excesivamente grandes; no reconstruye información cuyo gradiente ya se redujo demasiado.
+
+No se midieron experimentalmente gradientes por distancia en este proyecto. Por ello, no se atribuye la diferencia entre RNN y LSTM a un diagnóstico comprobado de desvanecimiento. Ese mecanismo se explica como fundamento de la arquitectura, mientras que el rendimiento observado se discute con las métricas que sí fueron calculadas.
+
+\subsection{Por qué se introduce LSTM}
+LSTM significa \emph{Long Short-Term Memory}. Es una arquitectura recurrente diseñada para mejorar el manejo de información a través de secuencias. Hochreiter y Schmidhuber~\cite{hochreiter1997} presentan su formulación original. El rasgo central es una celda que mantiene información y operaciones que controlan su actualización, en lugar de depender únicamente de un estado transformado de la misma manera en cada paso.
+
+Las implementaciones posteriores han incorporado variantes. La utilizada en este trabajo corresponde a la capa LSTM de PyTorch y se explica mediante compuertas de entrada, olvido y salida. Esta elección permite estudiar el mecanismo habitual de la celda sin reproducir todas las variantes históricas ni incorporar conexiones que el programa no utiliza.
+
+Una LSTM continúa procesando una secuencia en orden. No elimina la recurrencia ni permite ver palabras futuras. En cada paso utiliza la entrada actual, el estado oculto anterior y la celda anterior. Sus cálculos actualizan la celda y producen un nuevo estado oculto. Ambos estados tienen 64 componentes en la implementación.
+
+\subsection{Estado oculto y estado de celda}
+El estado de celda, representado por $c_t$, conserva información mediante una actualización que suma una parte retenida y una parte nueva. El estado oculto, representado por $h_t$, es la salida recurrente que se utiliza en los cálculos del siguiente paso y en la predicción final. Aunque tengan la misma cantidad de valores, no cumplen exactamente la misma función.
+
+La distinción permite que parte de la información permanezca en la celda sin expresarse de la misma forma en la salida del paso. La compuerta de salida participa en esa selección. Por tanto, hablar únicamente de ``la memoria'' sin identificar celda y estado puede ocultar una diferencia esencial de la arquitectura.
+
+En el programa se usa la secuencia de estados ocultos que devuelve la capa. Para predecir se selecciona el estado oculto correspondiente a la última posición real. La celda participa internamente en el procesamiento, aunque el código no la muestre por separado al usuario. No se guarda una conversación entre consultas de la demo: los estados comienzan de nuevo para cada contexto.
+
+\subsection{Qué es una compuerta}
+Una compuerta es una operación aprendida que produce valores entre cero y uno. Esos valores multiplican componentes de otra cantidad para regular su participación. Un valor cercano a cero reduce mucho una contribución; un valor cercano a uno conserva una proporción mayor. En la práctica no es necesario que una compuerta sea exactamente cero o uno.
+
+La función sigmoide se utiliza para obtener esos valores. Se representa por $\sigma$ y transforma sus entradas al intervalo entre cero y uno. La entrada de cada compuerta depende de la palabra actual y del estado oculto anterior, combinados mediante pesos y sesgos aprendidos. Por eso, las compuertas pueden tomar decisiones numéricas diferentes en contextos distintos.
+
+Las compuertas no reciben reglas lingüísticas escritas como ``conservar un sujeto'' o ``olvidar una fecha''. El entrenamiento ajusta sus parámetros a partir de la pérdida. Es posible estudiar después sus comportamientos, pero no debe asignarse de antemano una interpretación gramatical a cada componente sin evidencia adicional.
+
+\subsection{Compuerta de olvido}
+La compuerta de olvido, denotada por $f_t$, regula cuánto de la celda anterior permanece en la actualización. Cada componente de $f_t$ multiplica la correspondiente componente de $c_{t-1}$. Si el valor es 0.9, conserva el noventa por ciento de esa componente antes de sumar la información nueva. Si es 0.1, conserva el diez por ciento.
+
+El nombre ``olvido'' no significa que se borre una palabra almacenada de manera literal. La celda contiene valores numéricos distribuidos. La operación reduce o conserva sus componentes. Tampoco debe confundirse con borrar ejemplos del corpus o eliminar pesos del archivo del modelo; se trata de una actualización temporal del estado durante una consulta.
+
+\subsection{Compuerta de entrada y contenido candidato}
+La compuerta de entrada, $i_t$, regula la incorporación de información nueva. La red calcula también un contenido candidato, $g_t$, mediante una transformación con tangente hiperbólica. El candidato propone valores que podrían añadirse a la celda y la compuerta establece qué proporción de cada componente se incorpora.
+
+Ambos cálculos dependen del contexto procesado, pero tienen funciones distintas. El candidato puede contener valores positivos o negativos. La compuerta aporta factores entre cero y uno. Multiplicarlos permite ajustar la magnitud de la contribución nueva sin convertir esa contribución en una palabra explícita. La suma posterior combina lo retenido del pasado con lo que se incorpora en el paso actual.
+
+\subsection{Actualización de la celda}
+La operación principal de memoria se expresa mediante:
+\begin{equation}\label{eq:celda}
+c_t=f_t\odot c_{t-1}+i_t\odot g_t.
+\end{equation}
+Aquí $c_t$ es la celda actual; $c_{t-1}$, la anterior; $f_t$, la compuerta de olvido; $i_t$, la compuerta de entrada; y $g_t$, el contenido candidato. El símbolo $\odot$ indica multiplicación componente por componente. No representa una multiplicación de matrices completa. Las dos partes se suman después de esa regulación.
+
+El siguiente ejemplo es didáctico. Supóngase una componente anterior de 0.8, un factor de olvido de 0.75, una compuerta de entrada de 0.2 y un candidato de 0.5. La información retenida es $0.75\cdot0.8=0.6$. La nueva contribución es $0.2\cdot0.5=0.1$. La componente actual de la celda resulta $0.6+0.1=0.7$.
+
+El cálculo muestra que conservar e incorporar información son operaciones que ocurren dentro de la misma actualización. Si cambia el factor de olvido, cambia la parte retenida. Si cambia la entrada, puede cambiar lo incorporado. En la red real se hacen operaciones equivalentes sobre las 64 componentes y las compuertas son salidas aprendidas, no cantidades seleccionadas manualmente como en este ejemplo.
+
+\subsection{Compuerta de salida}
+La compuerta de salida, $o_t$, regula qué parte del contenido de la celda se expresa en el estado oculto. Primero se transforma la celda con tangente hiperbólica y después se multiplica por esa compuerta:
+\begin{equation}\label{eq:salida_lstm}
+h_t=o_t\odot\tanh(c_t).
+\end{equation}
+El estado oculto $h_t$ sigue siendo un vector interno, no una lista de porcentajes del vocabulario. La capa de salida del modelo lo transforma posteriormente en logits y softmax permite obtener las probabilidades. Diferenciar esos pasos evita llamar ``predicción'' a cualquier valor intermedio de la red.
+
+Si se continúa el ejemplo didáctico anterior con $c_t=0.7$ y $o_t=0.6$, se obtiene aproximadamente $0.6\cdot\tanh(0.7)=0.363$. El valor de la celda era 0.7, pero el estado oculto de ese paso es aproximadamente 0.363. La diferencia ilustra la función de salida y no constituye una medición de los modelos entrenados.
+
+\subsection{Cómo se calculan las compuertas}
+Cada compuerta toma la representación de la entrada actual y el estado oculto previo, aplica sus pesos y sesgos y utiliza la sigmoide. Se puede resumir la operación de una compuerta como ``sigmoide de la combinación aprendida de entrada y estado anterior''. El contenido candidato usa una combinación semejante, pero con tangente hiperbólica.
+
+Esta explicación permite leer la arquitectura sin introducir una ecuación distinta para cada peso. No significa que las tres compuertas compartan los mismos parámetros: cada una dispone de sus transformaciones. Esa multiplicidad explica que la parte recurrente de LSTM tenga más parámetros que la RNN simple con el mismo tamaño oculto.
+
+Sherstinsky~\cite{sherstinsky2020} desarrolla los fundamentos y las ecuaciones de RNN y LSTM. Greff et al.~\cite{greff2017} examinan variantes de la arquitectura. Se utilizan esas referencias para respaldar la descripción general, conservando la diferencia entre sus formulaciones y la capa concreta del programa. El estudio local no reproduce los experimentos completos de esas publicaciones.
+
+\subsection{Qué puede y qué no puede conservar LSTM}
+La celda proporciona una forma de retener información a través de varios pasos. Su utilidad depende de que el entrenamiento aprenda ajustes adecuados de las compuertas. No garantiza que todos los elementos del contexto se conserven sin pérdida ni que una dependencia distante se aprenda con pocos ejemplos. Una arquitectura con más capacidad también puede necesitar condiciones distintas de optimización.
+
+La ventana de entrada establece un límite independiente. Con contexto doce, una palabra que ya no se incluye en la ventana no puede influir mediante un estado que comenzó en cero. El programa no mantiene la celda de una ventana a la siguiente. Esta condición explica por qué no se debe describir el prototipo como un sistema que recuerda todo un documento o una conversación extensa.
+
+La comparación entre contextos 4, 12 y 24 permite observar qué ocurre al cambiar la información disponible, pero no mide directamente cuántas posiciones recuerda una celda. Para medir memoria de forma específica haría falta una tarea diseñada para controlar la distancia de la información relevante. Ese experimento no forma parte de los resultados presentados.
+
+\subsection{RNN y LSTM en modelos de lenguaje}
+Sundermeyer, Schlüter y Ney~\cite{sundermeyer2012} estudian redes LSTM para modelado de lenguaje. Su trabajo muestra la pertinencia de investigar estas arquitecturas en predicción de palabras. Sin embargo, sus lenguas, datos y configuraciones no son los mismos de esta práctica. Sus resultados no se utilizan como si fueran resultados propios ni como una garantía de mejora para el español de AnCora.
+
+Doval, Gómez-Rodríguez y Vilares~\cite{doval2016} presentan un trabajo en español sobre segmentación de palabras mediante modelos de lenguaje neuronales. Su aplicación utiliza caracteres y busca recuperar la separación de palabras. Se incluye como antecedente en español sobre redes y lenguaje, pero se mantiene la diferencia: la práctica de este informe recibe palabras completas y predice la siguiente.
+
+\subsection{Comparación conceptual de las arquitecturas}
+\begin{table*}[tb]
+\caption{Diferencias de arquitectura relevantes para la práctica.}
+\centering
+\begin{tabular}{p{.18\textwidth}p{.36\textwidth}p{.36\textwidth}}
+\toprule Aspecto & RNN simple & LSTM\\\midrule
+Información interna & Mantiene un estado oculto. & Mantiene un estado oculto y una celda.\\
+Actualización & Combina entrada y estado previo mediante una transformación con tangente hiperbólica. & Regula retención, incorporación y salida mediante compuertas.\\
+Procesamiento & Recorre el contexto en orden. & También recorre el contexto en orden.\\
+Memoria en esta práctica & Limitada a la ventana y al estado reiniciado por ejemplo. & También limitada a la ventana; la celda se reinicia por ejemplo.\\
+Parámetros totales & 346296 con la configuración seleccionada. & 368184 con la configuración seleccionada.\\
+Resultado esperado & Debe establecerse mediante evaluación. & Su mayor complejidad no asegura una mejora automática.\\\bottomrule
+\end{tabular}
+\end{table*}
+
+La comparación no consiste en elegir la arquitectura que parece más avanzada por su nombre. Se debe observar qué recursos utiliza, qué resultados obtiene y bajo qué condiciones. En la práctica, ambas redes comparten tamaño de representación, tamaño oculto, datos y épocas, pero no poseen exactamente la misma cantidad de parámetros. Esa diferencia forma parte de la interpretación de los resultados.
+
+\subsection{Regularización utilizada}
+La regularización reúne decisiones que buscan evitar que el entrenamiento dependa excesivamente de peculiaridades de los ejemplos observados. En este proyecto se aplica dropout al estado utilizado por la capa final. Durante entrenamiento, esa operación anula aleatoriamente una parte de sus componentes según una probabilidad de 0.15. En evaluación y demo se desactiva.
+
+Srivastava et al.~\cite{srivastava2014} presentan dropout como método para reducir sobreajuste. Aquí se utiliza después de la capa recurrente y no dentro de las compuertas. Por ello, la afirmación correcta es que se regulariza el vector que se envía a la salida; no que se haya implementado cualquier variante de dropout recurrente descrita en otros trabajos.
+
+El valor 0.15 es una decisión del protocolo. No se afirma que sea el valor óptimo para todos los modelos de lenguaje. Tampoco se realizó una comparación local con varios valores de dropout. Su presencia se documenta para que otra persona pueda reproducir la misma configuración y distinguir una característica del programa de una conclusión experimental.

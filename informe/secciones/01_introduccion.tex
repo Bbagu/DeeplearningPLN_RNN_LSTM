@@ -1,0 +1,49 @@
+\section{Introducción}
+\subsection{Tema y problema de investigación}
+El procesamiento del lenguaje natural, abreviado PLN, estudia métodos que permiten a un programa trabajar con lenguaje humano. El texto puede utilizarse para buscar información, identificar un tema, clasificar una opinión o proponer una continuación. Estas tareas comparten el uso de palabras, pero tienen objetivos distintos. En esta investigación se estudia una de ellas: predecir la siguiente palabra de un texto en español.
+
+La predicción consiste en recibir palabras ya escritas y calcular qué palabras podrían aparecer después. Por ejemplo, ante la entrada ``el presidente del gobierno'', el programa presenta varias continuaciones posibles. La entrada se denomina contexto. La salida es una lista de sugerencias ordenadas por la probabilidad que les asigna el modelo. Esta probabilidad se calcula a partir de relaciones aprendidas durante el entrenamiento; no expresa certeza sobre la intención de quien escribe.
+
+El problema requiere considerar el orden de las palabras. La aparición de una palabra puede depender de la que está inmediatamente antes, pero también de varias palabras anteriores. Una solución que solo observa el último término dispone de menos información que otra que procesa un contexto más extenso. Sin embargo, recibir más información no asegura por sí solo una predicción mejor: el programa debe aprender a utilizarla y contar con ejemplos suficientes.
+
+Las redes neuronales recurrentes, conocidas como RNN por su nombre en inglés, procesan una secuencia paso a paso. En cada paso actualizan un conjunto de valores que representa información del contexto leído. Las redes LSTM son una clase de red recurrente que añade una celda de memoria y operaciones para regular qué información conserva, qué información incorpora y qué información utiliza al producir una salida. El manejo de esta memoria es el punto central del tema asignado al grupo 5.
+
+En el trabajo se implementan ambas arquitecturas en Python y se comparan sus predicciones. También se incorpora un modelo de bigramas, que estima la continuación utilizando únicamente la palabra anterior. Esta referencia sencilla permite comprobar si las redes aportan una mejora en las condiciones del experimento. La comparación utiliza los mismos ejemplos y un vocabulario común para que las diferencias no se deban a evaluar textos distintos.
+
+\subsection{Importancia del tema}
+El autocompletado puede apoyar la escritura en editores, formularios y otros sistemas que reciben texto. Su utilidad consiste en ofrecer alternativas que una persona puede aceptar o ignorar. En estos casos interesan tanto la pertinencia de las sugerencias como el tiempo necesario para obtenerlas. Un sistema que propone palabras poco adecuadas puede interrumpir la escritura, aunque ejecute sus cálculos con rapidez.
+
+Los modelos de lenguaje también sirven para asignar probabilidades a posibles secuencias de palabras. Mikolov et al.~\cite{mikolov2010} estudian un modelo recurrente aplicado al modelado de lenguaje y al reconocimiento del habla. En ese contexto, una distribución de palabras ayuda a valorar diferentes hipótesis de transcripción. Se cita esa aplicación para mostrar la utilidad del modelado de secuencias, sin afirmar que el programa de esta investigación reconozca voz.
+
+Desde la formación en Ingeniería en Software, el tema permite relacionar una descripción teórica con un programa ejecutable. No basta con indicar que una LSTM tiene memoria: es necesario identificar cómo recibe los datos, qué valores mantiene, cómo aprende y qué resultado produce. También es necesario comprobar que el programa evalúa información que no utilizó para ajustar sus parámetros. Estas decisiones influyen directamente en la validez de las conclusiones.
+
+El estudio resulta útil incluso cuando una arquitectura más compleja no obtiene el mejor resultado. Una investigación debe comunicar lo que muestran sus datos. En este experimento, la RNN obtiene mejores valores medios que la LSTM en la comparación principal. Ese resultado se conserva y se analiza, porque permite distinguir entre la capacidad teórica de una arquitectura y su comportamiento bajo un conjunto concreto de condiciones.
+
+\subsection{Objetivo general}
+Analizar el funcionamiento de las redes RNN y LSTM y su manejo de información en secuencias, mediante la implementación y evaluación de un sistema de predicción de la siguiente palabra en español.
+
+\subsection{Objetivos específicos}
+\begin{enumerate}
+\item Explicar cómo una RNN actualiza su estado y cómo una LSTM utiliza una celda y compuertas para regular la información de una secuencia.
+\item Preparar un conjunto de textos en español que permita crear ejemplos de contexto y siguiente palabra sin incorporar información futura en la entrada.
+\item Implementar ambos modelos con las bibliotecas de Python necesarias y documentar la función de sus componentes.
+\item Comparar los modelos mediante pérdida, perplejidad y acierto en las primeras sugerencias, utilizando una referencia de bigramas.
+\item Examinar las limitaciones observadas y mostrar el funcionamiento del autocompletado mediante una demostración ejecutable.
+\end{enumerate}
+
+\subsection{Pregunta de investigación}
+La pregunta que orienta el experimento es: ¿una LSTM obtiene mejores predicciones de la siguiente palabra que una RNN simple cuando ambas utilizan el mismo corpus, el mismo vocabulario y el mismo número de épocas de entrenamiento? Una época es un recorrido completo por los ejemplos seleccionados para aprender. La respuesta se obtiene a partir de las mediciones y no se establece por anticipado a favor de alguna arquitectura.
+
+También se examina una pregunta complementaria: ¿qué ocurre cuando el contexto máximo cambia de 4 a 12 o 24 palabras? Esta comparación adicional tiene menos repeticiones que el estudio principal. Por ese motivo, sus resultados se interpretan como una observación inicial y no como una conclusión general sobre cualquier longitud de texto.
+
+\subsection{Alcance del trabajo}
+La aplicación recibe palabras completas y propone la siguiente. No corrige automáticamente errores ortográficos, no completa letras dentro de una palabra y no construye respuestas a preguntas. Tampoco traduce, resume documentos ni desarrolla arquitecturas de otros grupos. Los temas de preparación de texto y representación numérica se incluyen únicamente en la medida en que son necesarios para explicar las entradas de RNN y LSTM.
+
+El experimento utiliza textos periodísticos de UD Spanish-AnCora, versión r2.17. Se trabaja con un vocabulario de 3000 entradas y con 100000 posiciones objetivo de entrenamiento. Una posición objetivo es un lugar del texto cuya palabra se intenta predecir. Las redes son pequeñas y se ejecutan en la CPU del equipo, es decir, en su procesador central, sin entrenamiento en una tarjeta gráfica.
+
+La comparación principal utiliza tres inicializaciones por arquitectura. Las pruebas adicionales de longitud de contexto utilizan una inicialización. El conjunto final de prueba contiene 56796 posiciones. No se estudia la aceptación de las sugerencias por parte de personas ni el ahorro de tiempo al escribir. Los resultados permiten valorar el programa sobre el corpus reservado, pero no bastan para afirmar que sea un producto listo para su uso cotidiano.
+
+\subsection{Relación entre investigación e implementación}
+La consulta bibliográfica explica qué son las arquitecturas y qué dificultades se conocen sobre su entrenamiento. El código concreta esas ideas en operaciones verificables. Los datos proporcionan ejemplos de lenguaje y la evaluación produce cifras sobre el comportamiento de los modelos. Estos elementos cumplen funciones diferentes: una publicación no contiene los resultados de esta ejecución local, y una gráfica local no demuestra por sí sola todas las afirmaciones de la literatura.
+
+Por ese motivo, el informe distingue las explicaciones documentales, los ejemplos didácticos y los resultados observados. Las explicaciones documentales se acompañan de citas. Los ejemplos numéricos sencillos se identifican como didácticos y sirven para comprender una operación. Los resultados observados proceden de archivos generados durante los entrenamientos y la evaluación del proyecto.

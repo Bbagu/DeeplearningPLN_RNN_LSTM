@@ -1,0 +1,142 @@
+[
+  {
+    "archivo": "investigacion/pdf/hochreiter1997.pdf",
+    "url": "https://www.bioinf.jku.at/publications/older/2604.pdf",
+    "bytes": 396938,
+    "sha256": "ceb9e53dbc0493f5b3bf5520ed940f3e6b526064d17b2118d77e51f79c0edcc6",
+    "acceso": "copia local de descarga previa",
+    "status": 200
+  },
+  {
+    "archivo": "investigacion/pdf/greff2017.pdf",
+    "url": "https://arxiv.org/pdf/1503.04069",
+    "bytes": 2663695,
+    "sha256": "1b11fc7352c7f27f418a916ec6b07a2079c67dfdd402438b51f2a98f71d2bce0",
+    "acceso": "copia local de descarga previa",
+    "status": 200
+  },
+  {
+    "archivo": "investigacion/pdf/sherstinsky2020.pdf",
+    "url": "https://arxiv.org/pdf/1808.03314",
+    "bytes": 1310297,
+    "sha256": "7f11a224410befc7675b5ef81833d11556c92df825f0b0d981c6c2177dad0a0d",
+    "acceso": "copia local de descarga previa",
+    "status": 200
+  },
+  {
+    "archivo": "investigacion/pdf/pascanu2013.pdf",
+    "url": "https://proceedings.mlr.press/v28/pascanu13.pdf",
+    "bytes": 642584,
+    "sha256": "d786c18c0e1ed58aee30ce78b5163a9f771978c3146b68737528e1cda6ac1e74",
+    "acceso": "copia local de descarga previa",
+    "status": 200
+  },
+  {
+    "archivo": "investigacion/pdf/bengio2003.pdf",
+    "url": "https://www.jmlr.org/papers/volume3/bengio03a/bengio03a.pdf",
+    "bytes": 140095,
+    "sha256": "0bddf9a608d62da449a6413d86cbf6e8b206212595efe0e0a14da0d79d5f4976",
+    "acceso": "copia local de descarga previa",
+    "status": 200
+  },
+  {
+    "archivo": "investigacion/pdf/mikolov2010.pdf",
+    "url": "https://www.isca-archive.org/interspeech_2010/mikolov10_interspeech.pdf",
+    "bytes": 222140,
+    "sha256": "50b42f21cce19c7a7ec3ae3cb11d0584d6ed0fd67fdf29541764052f20a667d2",
+    "acceso": "copia local de descarga previa",
+    "status": 200
+  },
+  {
+    "archivo": "investigacion/pdf/sundermeyer2012.pdf",
+    "url": "https://www.isca-archive.org/interspeech_2012/sundermeyer12_interspeech.pdf",
+    "bytes": 1575545,
+    "sha256": "5c4f5ce407d8cace13167900dd24ed3468744baa3b7bbb43045ee6935caef943",
+    "acceso": "copia local de descarga previa",
+    "status": 200
+  },
+  {
+    "archivo": "investigacion/pdf/srivastava2014.pdf",
+    "url": "https://www.jmlr.org/papers/volume15/srivastava14a/srivastava14a.pdf",
+    "bytes": 2869095,
+    "sha256": "9c196ccbe6c6a595a1adba6cd030d35f7c2e548bbf5e7f1278b0109d8dd9ebaa",
+    "acceso": "copia local de descarga previa",
+    "status": 200
+  },
+  {
+    "archivo": "investigacion/pdf/taule2008.pdf",
+    "url": "https://aclanthology.org/L08-1222.pdf",
+    "bytes": 279797,
+    "sha256": "27f4c4482ed64067e23ef26f20770a432fdebdd7d517e5bff0fe75b60249ff80",
+    "acceso": "copia local de descarga previa",
+    "status": 200
+  },
+  {
+    "archivo": "investigacion/pdf/doval2016.pdf",
+    "url": "https://www.redalyc.org/pdf/5157/515754424008.pdf",
+    "status": 200,
+    "url_final": "https://www.redalyc.org/pdf/5157/515754424008.pdf",
+    "tipo": "application/pdf",
+    "bytes": 493651,
+    "sha256": "c6a8716f0e198d53cda8294ce4bd51ca7bbe09e415d1fa68681a52695add0251",
+    "acceso": "sin cuenta ni pago"
+  },
+  {
+    "archivo": "investigacion/pdf/bengio1994.pdf",
+    "url": "https://www.cs.cmu.edu/~bhiksha/courses/deeplearning/Fall.2016/pdfs/Bengio_94.pdf",
+    "status": 200,
+    "url_final": "https://www.cs.cmu.edu/~bhiksha/courses/deeplearning/Fall.2016/pdfs/Bengio_94.pdf",
+    "tipo": "application/pdf",
+    "bytes": 321695,
+    "sha256": "bab3b7f441358173e55a307ed3c7471d9f6c9344d14afed0ca651cf153a6968b",
+    "acceso": "sin cuenta ni pago"
+  },
+  {
+    "archivo": "investigacion/pdf/nivre2020.pdf",
+    "url": "https://aclanthology.org/2020.lrec-1.497.pdf",
+    "bytes": 686820,
+    "sha256": "469661b6a667fcf27ab738564d17688e9cfc29ebc40eaf8bb8fe29514ac1a1be",
+    "acceso": "copia local de descarga previa",
+    "status": 200
+  },
+  {
+    "archivo": "datos/originales/es_ancora-ud-train.conllu",
+    "url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Spanish-AnCora/r2.17/es_ancora-ud-train.conllu",
+    "bytes": 42994749,
+    "sha256": "f235c5dcad8a2c48e71459d66433bbab9e867d13c25c32cd5bc20e7c57f34bca",
+    "acceso": "copia local de descarga previa",
+    "status": 200
+  },
+  {
+    "archivo": "datos/originales/es_ancora-ud-dev.conllu",
+    "url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Spanish-AnCora/r2.17/es_ancora-ud-dev.conllu",
+    "bytes": 5109097,
+    "sha256": "a7a6f19880955c59f2f7420ffd4739ad4d8b36221e03a4196fc33cf67bf741e9",
+    "acceso": "copia local de descarga previa",
+    "status": 200
+  },
+  {
+    "archivo": "datos/originales/es_ancora-ud-test.conllu",
+    "url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Spanish-AnCora/r2.17/es_ancora-ud-test.conllu",
+    "bytes": 5110158,
+    "sha256": "abee215c3e8ae605421afdcd776986439e1d049e5e25aba89843ad01045a1165",
+    "acceso": "copia local de descarga previa",
+    "status": 200
+  },
+  {
+    "archivo": "datos/originales/README.md",
+    "url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Spanish-AnCora/r2.17/README.md",
+    "bytes": 5752,
+    "sha256": "2c5005d1aa9639648356af1f6865185e67e133cf655750990ae06b88762fc2c9",
+    "acceso": "copia local de descarga previa",
+    "status": 200
+  },
+  {
+    "archivo": "datos/originales/LICENSE.txt",
+    "url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Spanish-AnCora/r2.17/LICENSE.txt",
+    "bytes": 189,
+    "sha256": "653702c7fdee69f7d7a439c9ba4c178c26e745479f6e6d2943bed1a9b9c7bf67",
+    "acceso": "copia local de descarga previa",
+    "status": 200
+  }
+]

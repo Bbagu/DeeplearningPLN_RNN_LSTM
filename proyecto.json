@@ -1,0 +1,24 @@
+{
+  "asignatura": "Base de Conocimiento",
+  "grupo": 5,
+  "tema": "Deep learning en PLN: RNN y LSTM",
+  "integrantes": [
+    "Angel David Gadvay Cepeda",
+    "Walter Padilla",
+    "Jaime Morales",
+    "Jose Nieto",
+    "Bryan Lema",
+    "Max Viteri"
+  ],
+  "fecha_entrega": "2026-10-06",
+  "repositorio_url": null,
+  "presentacion_url": null,
+  "preferencia_fuentes": "Texto completo gratuito y verificable; preferencia por español",
+  "estado_autoria": "Documento completo de estudio y revisión asistido por IA; no certifica autoría estudiantil ni cumplimiento del límite institucional",
+  "informe": "informe/main.pdf",
+  "guia_aprendizaje": "guia/Guia_para_entender_el_proyecto.pdf",
+  "entrada_recomendada": "LEEME_PRIMERO.md",
+  "estado_presentacion": "Presentación nueva de 12 diapositivas con notas de 35 minutos, 30 de septiembre de 2026",
+  "presentacion_archivo": "presentacion/Grupo_5_RNN_LSTM_2026_revision5.pptx",
+  "paquete_grupo": "PARA_COMPARTIR_GRUPO_5.zip"
+}

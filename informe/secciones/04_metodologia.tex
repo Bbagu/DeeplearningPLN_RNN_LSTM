@@ -1,0 +1,135 @@
+\section{Metodología}
+\subsection{Diseño de la investigación}
+Se desarrolla una investigación documental acompañada de un experimento de programación. La parte documental reúne publicaciones sobre modelos de lenguaje, recurrencia, memoria LSTM y dificultades de entrenamiento. La parte práctica construye un sistema de siguiente palabra y obtiene mediciones mediante ejecuciones registradas. Ambas partes se relacionan, pero no se sustituyen entre sí.
+
+El estudio principal compara RNN y LSTM con contexto máximo de doce elementos. Para cada arquitectura se realizan tres entrenamientos con semillas distintas. Se mantienen constantes el corpus, el vocabulario, el tamaño de representación, el tamaño oculto, el número de capas y el número de épocas. El modelo de bigramas utiliza los mismos objetivos seleccionados para entrenamiento y el mismo vocabulario.
+
+El protocolo se registró antes de evaluar el conjunto final de prueba. Después de observar esa evaluación no se modificaron los pesos para buscar una cifra más favorable. Las correcciones posteriores de documentación y compatibilidad de carga no cambiaron el entrenamiento. Esta separación permite presentar los resultados como una ejecución definida y no como una selección de cifras obtenidas después de múltiples ajustes sobre prueba.
+
+\subsection{Selección de fuentes}
+Se seleccionan doce publicaciones académicas pertinentes al tema. Se prioriza la posibilidad de leer su texto completo sin cuenta ni pago. La selección combina artículos fundacionales, estudios sobre entrenamiento, aplicaciones al modelado de lenguaje y referencias sobre el corpus. Se conserva un antecedente en español y se utilizan originales en inglés cuando aportan evidencia directa.
+
+La existencia de una fuente en inglés no obliga a mantener explicaciones difíciles en el informe. Sus conceptos se presentan en español, con definición de términos cuando se necesitan. Los títulos y datos bibliográficos se mantienen para que el lector pueda localizar la publicación original. Las cifras del experimento no se toman de esos artículos: se calculan a partir del programa del proyecto.
+
+El acceso abierto se distingue de la página editorial. Una publicación puede tener un registro editorial con acceso limitado y una copia académica gratuita de autor. Las fichas conservan ambas funciones: los datos de publicación permiten identificar el trabajo y el enlace abierto permite leer el texto utilizado. No se sustituye el artículo por una descripción comercial ni se considera que un resumen breve equivale a revisar el texto completo.
+
+\subsection{Procedencia de los textos}
+Se utiliza UD Spanish-AnCora r2.17. AnCora es un corpus anotado de catalán y español descrito por Taulé, Martí y Recasens~\cite{taule2008}. Para esta práctica se selecciona su distribución en español dentro de Universal Dependencies. Nivre et al.~\cite{nivre2020} describen el conjunto multilingüe y su organización. Estas referencias respaldan la procedencia del recurso, no el rendimiento de los modelos entrenados aquí.
+
+Los textos son principalmente periodísticos. Esta característica influye en las palabras disponibles y en sus combinaciones. Por ejemplo, nombres y expresiones habituales en noticias pueden aparecer con mayor frecuencia que términos usados en conversaciones de estudiantes. La selección del corpus es adecuada para disponer de texto verificable, pero limita el alcance de una demostración que reciba vocabulario de otros ámbitos.
+
+La versión utilizada contiene archivos separados originalmente para entrenamiento, desarrollo y prueba. En este proyecto se leen esos archivos y se realiza una nueva separación por documento. Por lo tanto, las mediciones no corresponden a la división oficial utilizada para evaluar otras tareas de Universal Dependencies. Se informa esta diferencia para impedir comparaciones directas con resultados publicados bajo otra partición.
+
+\subsection{Uso de anotaciones y texto original}
+Los archivos del corpus emplean el formato CoNLL-U, que almacena texto y anotaciones lingüísticas. No es necesario utilizar todas sus columnas para la tarea elegida. El programa lee el identificador de documento, el identificador de oración y el campo que conserva el texto de la oración. Las etiquetas gramaticales y las relaciones sintácticas no se incluyen como entradas de la red.
+
+Esta decisión mantiene la práctica centrada en predicción de palabras a partir de palabras anteriores. Si se añadieran etiquetas calculadas utilizando toda la oración, sería necesario comprobar si incorporan información que no estaría disponible durante una consulta real. Aquí se evita esa dificultad al utilizar solo el texto anterior al objetivo.
+
+Leer el campo de texto también permite conservar las palabras superficiales. Por ejemplo, la forma ``del'' permanece como una palabra en la representación del programa, aunque un esquema de anotación pueda distinguir sus componentes. La tokenización del proyecto se documenta de forma independiente para que el lector no suponga que se utilizan directamente todas las unidades del análisis lingüístico original.
+
+\subsection{Licencia y transformaciones}
+El archivo de licencia de la versión r2.17 indica CC BY 4.0. Se conserva la atribución al recurso y a sus autores y contribuidores. El material procesado se identifica como una transformación del corpus: se cambian mayúsculas, se normalizan números, se omite puntuación y se crean particiones y ventanas propias. No se atribuyen esas transformaciones a los autores del corpus original.
+
+Las copias de artículos empleadas para consulta no forman parte de los datos de entrenamiento. Tampoco se redistribuyen automáticamente como si tuvieran la misma licencia que AnCora. El corpus, la bibliografía y el código cumplen funciones distintas y mantienen su procedencia por separado.
+
+\subsection{Preparación del texto}
+La preparación empieza por convertir el texto a minúsculas. A continuación se aplica una normalización Unicode denominada NFC, que unifica ciertas representaciones equivalentes de caracteres. Se mantienen las tildes: ``anunció'' no se convierte en ``anuncio''. La distinción puede ser relevante para el uso de la palabra en una secuencia.
+
+La tokenización separa el texto en unidades. En esta implementación, esas unidades son palabras y cantidades numéricas reconocidas por una regla de búsqueda. Se omiten los signos de puntuación. Las cantidades se reemplazan por la categoría \texttt{<num>}. Así se evita disponer de una entrada diferente para cada cifra, pero se pierde la posibilidad de predecir el número exacto.
+
+\begin{table*}[tb]
+\caption{Decisiones de preparación y sus consecuencias. Los ejemplos son didácticos.}
+\centering
+\begin{tabular}{p{.18\textwidth}p{.25\textwidth}p{.46\textwidth}}
+\toprule Decisión & Ejemplo & Consecuencia para la tarea\\\midrule
+Minúsculas & ``Gobierno'' pasa a ``gobierno''. & Reduce variantes escritas; la salida no recupera mayúsculas de nombres propios.\\
+Conservar tildes & ``llegó'' conserva su tilde. & Mantiene diferencias entre formas escritas que no conviene eliminar.\\
+Normalizar números & ``2026'' pasa a la categoría numérica. & Permite aprender posiciones de números, pero no cuál cifra escribir.\\
+Omitir puntuación & Se eliminan comas y puntos como objetivos. & El programa propone palabras y no signos de puntuación.\\
+Conservar palabras funcionales & Permanecen ``de'', ``el'' y ``la''. & El modelo puede aprender y proponer continuaciones frecuentes necesarias.\\
+Conservar formas flexionadas & ``estudia'' y ``estudian'' siguen distintas. & Se mantiene información de la forma escrita usada en el corpus.\\\bottomrule
+\end{tabular}
+\end{table*}
+
+No se eliminan las llamadas stopwords, es decir, palabras muy frecuentes que algunas aplicaciones excluyen. En autocompletado, artículos y preposiciones son respuestas válidas y aportan relaciones de orden. Quitarlas convertiría el problema en una predicción sobre texto incompleto diferente del que se desea escribir.
+
+Tampoco se reduce cada palabra a una raíz ni a una forma de diccionario. La salida esperada es una forma escrita que continúa el contexto. Una transformación que reuniera todas las conjugaciones podría disminuir el vocabulario, pero obligaría a resolver después cómo recuperar la forma adecuada. Ese paso adicional no forma parte de la implementación.
+
+\subsection{Eliminación de oraciones repetidas}
+Se comparan las secuencias normalizadas y se elimina una oración cuando es idéntica a otra ya leída. El procedimiento excluyó 62 oraciones. La comparación se realiza sobre el texto preparado, por lo que considera iguales secuencias que quedaron iguales después de las transformaciones. No se utiliza un modelo de significado para encontrar paráfrasis.
+
+Eliminar repeticiones exactas reduce la presencia de ejemplos duplicados, pero no demuestra que todos los documentos sean independientes. Dos noticias sobre el mismo acontecimiento pueden contener frases parecidas sin ser idénticas. Esa semejanza permanece como una limitación del conjunto de datos y debe distinguirse de la coincidencia exacta que sí se verificó.
+
+\subsection{Separación por documento}
+Cada documento se asigna a una sola partición mediante una regla fija basada en su identificador. Se calcula una huella numérica con SHA-256 y se distribuye el resultado entre intervalos destinados a entrenamiento, validación o prueba. Una huella es una transformación determinista: el mismo identificador produce el mismo valor cuando se aplica la misma regla.
+
+La regla pretende repartir aproximadamente el 80\% de documentos para entrenamiento, el 10\% para validación y el 10\% para prueba. Las proporciones reales no tienen que ser exactas y los documentos no contienen todos la misma cantidad de palabras. Por eso se presentan los tamaños obtenidos en lugar de describir el reparto únicamente con porcentajes previstos.
+
+\begin{table*}[tb]
+\caption{Tamaños reales después de preparar el corpus.}
+\label{tab:corpus_nuevo}
+\centering
+\begin{tabular}{lrrr}
+\toprule Medida & Entrenamiento & Validación & Prueba\\\midrule
+Documentos & 1268 & 173 & 194\\
+Oraciones & 13380 & 1971 & 2248\\
+Posiciones de palabras & 372317 & 52695 & 56796\\
+Objetivos usados por los modelos & 100000 & 52695 & 56796\\
+Objetivos desconocidos entre los usados & 19849 & 11115 & 12033\\
+Porcentaje desconocido entre los usados & 19.85\% & 21.09\% & 21.19\%\\\bottomrule
+\end{tabular}
+\end{table*}
+
+Las 372317 posiciones de entrenamiento son el total disponible después de preparar esa partición. De ellas se seleccionan 100000 para actualizar parámetros. Validación y prueba utilizan todas sus posiciones. Por eso no se debe sumar la fila de objetivos usados y llamarla tamaño completo del corpus. La tabla muestra cantidades diferentes para responder preguntas diferentes.
+
+\subsection{Construcción del vocabulario}
+El vocabulario se construye solo con palabras del conjunto de entrenamiento. Se cuentan sus apariciones, se ordenan por frecuencia y se seleccionan las entradas más frecuentes hasta completar el tamaño previsto, reservando tres posiciones para señales técnicas. Cuando dos formas tienen la misma frecuencia, se utiliza el orden alfabético para resolver el empate de manera reproducible.
+
+Se utiliza todo el texto de entrenamiento para determinar esas frecuencias, aunque solo 100000 posiciones se seleccionen para optimizar los modelos. Esta decisión está permitida dentro de la separación elegida porque ese texto pertenece a entrenamiento. Validación y prueba no aportan nuevas entradas. La diferencia entre contar el vocabulario y seleccionar objetivos se informa para que la preparación pueda repetirse con precisión.
+
+Los modelos comparten exactamente la misma lista. Si cada red utilizara un vocabulario diferente, podría cambiar la cantidad de objetivos agrupados como desconocidos y la dificultad de las métricas. Mantener la lista común hace más clara la comparación, aunque no elimina las limitaciones que introduce su tamaño reducido.
+
+\subsection{Señales de inicio, relleno y desconocida}
+La señal BOS indica el comienzo de una oración. Permite formar un ejemplo para su primera palabra. La señal PAD se usa para rellenar entradas cortas cuando varias ventanas se organizan en una matriz del mismo tamaño. La señal UNK representa formas que no tienen entrada propia en el vocabulario. Las tres señales son diferentes y no deben intercambiarse.
+
+PAD no es una palabra que el modelo deba sugerir. BOS tampoco es una continuación normal del texto. Por esa razón, sus puntuaciones de salida se reducen a un valor muy negativo antes de calcular probabilidades. UNK sí permanece como objetivo interno cuando una palabra real no está disponible en el vocabulario. La demo lo oculta como sugerencia, pero informa la probabilidad que recibió.
+
+El relleno se añade después de la última posición real. El programa registra la longitud verdadera y utiliza el estado correspondiente a esa posición, evitando tomar como resultado el estado del último relleno. Como el procesamiento es unidireccional, los PAD posteriores no pueden influir hacia atrás sobre un estado ya calculado. Esta propiedad se comprueba con una prueba automatizada.
+
+\subsection{Selección de objetivos y creación de ventanas}
+Se seleccionan 100000 posiciones de entrenamiento sin reemplazo. Sin reemplazo significa que no se elige dos veces la misma posición dentro de esa selección. La semilla utilizada para esta operación es 20260929. Se mantiene separada de las semillas de las redes, porque controla la selección de datos y no la inicialización del modelo.
+
+Para cada objetivo se conserva solo su contexto anterior dentro de la misma oración. Las ventanas no cruzan el final de una oración ni el límite entre documentos. Esta regla facilita interpretar qué información pudo utilizar el modelo y evita concatenar fragmentos que no forman una continuación real en el texto.
+
+Dos ejemplos distintos pueden compartir parte de su contexto porque proceden de posiciones cercanas de una misma oración. Eso es esperable en una tarea de siguiente palabra. La separación entre conjuntos se realiza antes por documento, de modo que esa relación local entre ventanas no implica que el mismo documento aparezca en entrenamiento y prueba.
+
+\subsection{Configuración fijada}
+\begin{table*}[tb]
+\caption{Configuración de las redes y función de cada decisión.}
+\centering
+\begin{tabular}{p{.22\textwidth}p{.15\textwidth}p{.52\textwidth}}
+\toprule Elemento & Valor & Función\\\midrule
+Vocabulario & 3000 & Define cuántos identificadores reconoce la entrada y cuántas puntuaciones produce la salida.\\
+Representación por palabra & 48 valores & Tamaño del vector consultado por la capa de embedding.\\
+Estado oculto & 64 valores & Tamaño del resultado interno de cada paso recurrente.\\
+Capas recurrentes & 1 & Mantiene una arquitectura pequeña para la comparación.\\
+Dirección & Hacia adelante & Procesa solo información disponible antes del objetivo.\\
+Contexto principal & 12 elementos & Máxima longitud de entrada de la comparación con tres semillas.\\
+Lote & 512 ejemplos & Cantidad de ejemplos de cada actualización, salvo el último lote si es menor.\\
+Épocas & 5 & Número de recorridos completos por los objetivos elegidos.\\
+Optimizador & Adam & Regla de actualización de parámetros a partir de gradientes.\\
+Tasa de aprendizaje & 0.003 & Configura la escala del ajuste realizado por el optimizador.\\
+Dropout & 0.15 & Regula el vector enviado a la salida durante entrenamiento.\\
+Recorte de norma & 1 & Limita gradientes excesivamente grandes.\\
+Semillas principales & 17, 29, 43 & Permiten observar variación entre inicializaciones.\\\bottomrule
+\end{tabular}
+\end{table*}
+
+Los valores configuran el experimento y no se presentan como los mejores posibles. Se eligió un tamaño que pudiera ejecutarse y explicarse en el entorno disponible. No se realizó una búsqueda exhaustiva de combinaciones. La reproducibilidad consiste en informar estas decisiones con precisión, mientras que su optimalidad requeriría otro estudio.
+
+\subsection{Ejecuciones realizadas}
+Se ejecutan seis entrenamientos principales: tres RNN y tres LSTM con contexto doce. Además se entrenan una RNN y una LSTM con contexto cuatro y otra pareja con contexto veinticuatro, todas con semilla 17. El total de entrenamientos finales es diez. Un piloto anterior de 2048 ejemplos y una época se utiliza para comprobar funcionamiento y queda excluido de la comparación.
+
+Cada entrenamiento guarda la versión que obtiene la menor pérdida en validación. Aunque se guarde una versión intermedia, el programa completa las cinco épocas. Esto es selección del mejor estado observado, no interrupción anticipada del entrenamiento. El conjunto de prueba se utiliza después de que concluyen esas ejecuciones.
+
+Las tres semillas principales permiten calcular una media y una desviación estándar muestral. La media resume los tres valores; la desviación muestra cuánto difieren entre sí. Esa variación corresponde a la inicialización y al orden de entrenamiento dentro del mismo reparto documental. No es una medida completa de la incertidumbre que habría al cambiar de corpus.
