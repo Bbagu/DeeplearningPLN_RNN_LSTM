@@ -1,0 +1,10 @@
+* text=auto eol=lf
+*.conllu -text
+*.cls -text
+*.bst -text
+*.pdf binary
+*.png binary
+*.pptx binary
+*.pt binary
+*.npz binary
+*.zip binary
