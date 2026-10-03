@@ -1,0 +1,21 @@
+\section{Conclusiones}
+La predicción de la siguiente palabra permite estudiar de forma concreta el procesamiento de secuencias. El contexto aporta las palabras anteriores y el modelo asigna probabilidades a posibles continuaciones. La salida depende tanto de la arquitectura como de la representación del texto, el vocabulario y los ejemplos utilizados durante entrenamiento.
+
+La RNN simple mantiene un estado oculto que se actualiza en cada posición. La LSTM añade una celda y compuertas que regulan la retención, la incorporación y la salida de información. Esta diferencia explica su mecanismo de memoria, pero no garantiza una mejora automática en cualquier experimento. En la implementación, ambas arquitecturas reinician sus estados por ventana y solo acceden a los elementos incluidos en ella.
+
+Se construyó un procedimiento que utiliza documentos separados para entrenamiento, validación y prueba, un vocabulario común de 3000 entradas y 100000 objetivos seleccionados para aprender. El programa implementa las dos redes, una referencia de bigramas, métricas y una demo. Las pruebas de integridad verifican propiedades de preparación, evaluación y recuperación del modelo necesarias para interpretar la ejecución.
+
+Sobre 56796 objetivos de prueba, la RNN obtuvo perplejidad media de 75.60 y la LSTM de 78.15, frente a 85.93 del bigrama. El top-5 léxico fue 26.58\%, 26.14\% y 25.62\%, respectivamente. La comparación favorece a la RNN en las condiciones fijadas y muestra una mejora limitada del acierto en las primeras cinco posiciones. No demuestra superioridad general de RNN sobre LSTM.
+
+La tasa de desconocidas de 21.19\% restringe la capacidad de identificar palabras concretas. Los ejemplos de la demo muestran esa limitación con términos del entorno local y del área de software. El sistema es útil para estudiar recurrencia y evaluación, pero los resultados no respaldan presentarlo como un autocompletador de amplia cobertura listo para un uso productivo.
+
+La perplejidad y el acierto deben interpretarse conjuntamente. La primera resume probabilidad asignada a los objetivos, incluida la categoría desconocida; el segundo exige identificar una palabra conocida en una posición determinada. Diferenciar ambas medidas evita confundir una mejora de probabilidad con un aumento equivalente de palabras acertadas.
+
+Como extensión del mismo problema, se podría estudiar un vocabulario de mayor cobertura, un presupuesto de entrenamiento diferente o más repeticiones de la comparación de contextos. Esas propuestas requieren nuevos protocolos y evaluaciones independientes. No forman parte de los resultados realizados ni se utilizan para sustituir las limitaciones del experimento actual.
+
+\section{Enlaces a recursos}
+El código del proyecto está organizado en scripts de Python y los registros permiten consultar las métricas sin redondear. La guía de aprendizaje complementaria explica las rutas, los comandos y la procedencia de cada elemento. Las direcciones públicas del repositorio y de la presentación se incorporarán cuando los recursos estén publicados y se haya comprobado su acceso. No se presenta una dirección no creada como si estuviera disponible.
+
+El corpus utilizado puede consultarse en
+\url{https://github.com/UniversalDependencies/UD_Spanish-AnCora/tree/r2.17}.
+Los enlaces gratuitos a las doce publicaciones se encuentran en las referencias y en la guía complementaria. La presentación queda fuera de la revisión actual por indicación del grupo.

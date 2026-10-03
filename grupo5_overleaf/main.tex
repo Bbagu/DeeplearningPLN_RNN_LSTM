@@ -1,0 +1,65 @@
+% Documento completo de estudio y revision asistido por IA.
+% Basado en los ejemplos sigconf.tex y sigconf-i13n.tex suministrados.
+\PassOptionsToPackage{es-noshorthands}{babel}
+\documentclass[sigconf,nonacm,language=english,language=spanish]{acmart}
+\setcopyright{none}
+\settopmatter{printacmref=false,printfolios=true}
+\setlength{\emergencystretch}{1em}
+\Urlmuskip=0mu plus 2mu
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily\footnotesize,breaklines=true,columns=fullflexible,keepspaces=true,frame=single}
+\title{Deep learning en PLN: comparación reproducible de RNN y LSTM para autocompletado en español}
+\subtitle{Grupo 5 --- Documento completo de estudio y revisión}
+\author{Angel David Gadvay Cepeda}
+\author{Walter Padilla}
+\author{Jaime Morales}
+\author{Jose Nieto}
+\author{Bryan Lema}
+\author{Max Viteri}
+\affiliation{%
+  \institution{Escuela Superior Politécnica de Chimborazo}
+  \city{Riobamba}
+  \country{Ecuador}}
+\renewcommand{\shortauthors}{Grupo 5}
+\begin{document}
+\begin{abstract}
+Se implementa un autocompletador de la siguiente palabra en español con
+redes recurrentes simples y LSTM, comparadas con un bigrama suavizado.
+Se utiliza UD Spanish-AnCora r2.17, con particiones propias por documento,
+vocabulario de 3000 entradas y 100000 objetivos de entrenamiento.
+La comparación principal emplea tres semillas y contextos de 12 palabras.
+En 56796 objetivos de prueba, la perplejidad media es 75.60 para RNN y
+78.15 para LSTM, frente a 85.93 del bigrama. El acierto léxico top-5 es
+26.58\%, 26.14\% y 25.62\%, respectivamente. La LSTM no supera a la RNN
+en este protocolo. La tasa de palabras fuera de vocabulario, 21.19\%,
+limita la cobertura. Los resultados describen un experimento pequeño
+sobre prensa y no demuestran superioridad general de una arquitectura.
+\end{abstract}
+\begin{translatedabstract}{english}
+We implement Spanish next-word completion with a simple recurrent network
+and an LSTM, compared against a smoothed bigram baseline. UD Spanish-AnCora
+r2.17 is split by document using a custom deterministic rule. The vocabulary
+contains 3000 entries and training uses 100000 target positions. The main
+comparison uses three seeds and a 12-word context. On 56796 test targets,
+mean perplexity is 75.60 for the RNN and 78.15 for the LSTM, compared with
+85.93 for the bigram. Lexical top-5 accuracy is 26.58\%, 26.14\%, and
+25.62\%, respectively. The LSTM does not outperform the RNN under this
+protocol. A 21.19\% out-of-vocabulary rate limits coverage. These findings
+describe a small news-domain experiment and do not establish general
+architectural superiority.
+\end{translatedabstract}
+\keywords{procesamiento de lenguaje natural, RNN, LSTM, autocompletado}
+\maketitle
+
+\input{secciones/01_introduccion}
+\input{secciones/02_fundamentos}
+\input{secciones/03_rnn_lstm}
+\input{secciones/04_metodologia}
+\input{secciones/05_desarrollo}
+\input{secciones/05b_recorrido}
+\input{secciones/06_resultados}
+\input{secciones/07_conclusiones}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{referencias}
+\end{document}

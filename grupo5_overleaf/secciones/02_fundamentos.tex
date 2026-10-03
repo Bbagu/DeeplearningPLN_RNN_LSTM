@@ -1,0 +1,87 @@
+\section{Marco teórico: conceptos necesarios}
+\subsection{Procesamiento del lenguaje natural}
+Un programa no utiliza directamente el significado de una oración como lo haría una persona. Para operar sobre texto necesita una representación definida. En esta práctica, primero se identifica una secuencia de palabras, después se asigna un número a cada entrada del vocabulario y finalmente se consulta un conjunto de valores numéricos para cada identificador. Esta transformación permite que las redes realicen operaciones matemáticas sobre el texto.
+
+La representación no conserva todas las propiedades del lenguaje. Si el programa convierte letras a minúsculas, pierde la distinción entre ciertas formas escritas. Si agrupa números en una categoría común, ya no distingue una cifra concreta de otra. Por ello, la preparación del texto forma parte del diseño del modelo. Sus decisiones deben ser coherentes con la salida esperada y con la forma en que se evaluará el resultado.
+
+El término PLN engloba múltiples tareas, pero las métricas deben corresponder a la tarea elegida. Identificar si una reseña es positiva no es lo mismo que proponer la siguiente palabra. Aquí existen muchas respuestas candidatas, y varias pueden ser razonables para un mismo contexto. La evaluación automática, sin embargo, compara con la palabra que realmente aparece en el texto reservado. Una alternativa gramaticalmente posible puede contarse como error si no coincide con esa continuación.
+
+\subsection{Secuencia, contexto y palabra objetivo}
+Una secuencia es una colección ordenada. En esta investigación sus elementos son palabras normalizadas. ``El gobierno anunció cambios'' contiene cuatro posiciones. Para aprender a predecir, se pueden formar ejemplos utilizando los términos anteriores como entrada y el siguiente término como respuesta esperada. El modelo observa el contexto, calcula probabilidades y compara su salida con el objetivo conocido durante el entrenamiento.
+
+\begin{table}[tb]
+\caption{Ejemplo didáctico de contextos y objetivos. No son resultados del experimento.}
+\centering
+\begin{tabular}{p{.54\columnwidth}p{.32\columnwidth}}
+\toprule Contexto disponible & Palabra objetivo\\\midrule
+Inicio de oración & el\\
+el & gobierno\\
+el gobierno & anunció\\
+el gobierno anunció & cambios\\\bottomrule
+\end{tabular}
+\end{table}
+
+La primera fila necesita una señal de inicio porque aún no existen palabras anteriores. En el programa esa señal se llama BOS. Las demás filas utilizan un prefijo de la oración. Un prefijo es la parte inicial que precede al objetivo. En ninguna fila debe aparecer la propia palabra objetivo dentro de la entrada: si apareciera, el modelo recibiría la respuesta que se pretende evaluar.
+
+El contexto máximo indica cuántos elementos anteriores puede recibir la red. Con un límite de 12, una posición avanzada de la oración conserva como mucho los últimos 12 identificadores disponibles. Si solo existen tres palabras anteriores y una señal de inicio, el ejemplo tiene una longitud real de cuatro. El límite no obliga a que todos los ejemplos tengan doce palabras reales ni permite conocer partes futuras del texto.
+
+\subsection{Corpus y vocabulario}
+Un corpus es un conjunto de textos reunidos para su estudio. El corpus proporciona oraciones, documentos y palabras en situaciones concretas. El vocabulario, en cambio, es la lista de entradas que el programa reconoce mediante identificadores. Un mismo término puede aparecer muchas veces en el corpus y ocupar una sola entrada del vocabulario. Por tanto, contar palabras en el corpus y contar entradas del vocabulario son operaciones diferentes.
+
+En este proyecto hay 481808 posiciones de palabras después de la preparación y 3000 entradas de vocabulario. La primera cantidad cuenta apariciones, incluidas repeticiones. La segunda describe el número de identificadores disponibles. De las 3000 entradas, tres corresponden a señales técnicas: PAD, UNK y BOS. Las 2997 restantes proceden de los elementos más frecuentes del texto de entrenamiento, incluida la categoría numérica cuando se selecciona por frecuencia.
+
+Una palabra está fuera del vocabulario cuando su forma normalizada no tiene una entrada propia. El programa la representa mediante UNK. Esta decisión permite procesar una oración aunque incluya un término no conocido, pero pierde la identidad concreta de ese término. Si ``riobamba'' y ``chimborazo'' no están en la lista, ambas entradas se transforman en el mismo identificador UNK. La red no puede distinguir esos nombres a partir de ese identificador.
+
+Se utiliza un vocabulario limitado para mantener viable el cálculo en CPU y estudiar un sistema controlado. La decisión también introduce una limitación importante: algunas palabras presentes en la evaluación no se pueden producir como una salida identificable. Por ello se informa el porcentaje de palabras desconocidas y no se presenta el tamaño reducido como una ventaja sin costo.
+
+\subsection{Aprendizaje automático y redes neuronales}
+En aprendizaje automático, un modelo ajusta valores internos a partir de ejemplos. Estos valores se llaman parámetros. En una red neuronal se organizan principalmente en pesos y sesgos. Un peso modifica la contribución de una entrada a un cálculo; un sesgo añade un valor que también puede aprenderse. El entrenamiento cambia estos parámetros para mejorar una función objetivo definida por el diseñador.
+
+Una capa es un componente que transforma una entrada numérica en una salida. En este proyecto hay una capa que consulta representaciones de palabras, una capa recurrente que procesa el orden y una capa final que calcula puntuaciones para el vocabulario. El nombre de cada capa no reemplaza la necesidad de explicar qué recibe y qué produce. La descripción de sus tamaños se presenta más adelante junto con el código.
+
+El aprendizaje profundo estudia redes que construyen representaciones mediante sucesivas transformaciones. Dentro de este tema se encuentran las redes recurrentes. El programa de la práctica es deliberadamente pequeño: utiliza una sola capa recurrente. Por ello, no se debe afirmar que se entrenó una red de gran profundidad ni confundir el nombre general del área con una cantidad elevada de capas en esta implementación.
+
+\subsection{Representación numérica de palabras}
+El identificador de una palabra solo indica dónde se encuentra en la lista. Un identificador mayor no significa que la palabra sea más importante o que tenga un significado más intenso. Para obtener una representación que la red pueda ajustar, se utiliza una capa de \emph{embedding}. Se conserva este nombre técnico porque aparece en el código, pero su función es concreta: asociar cada entrada del vocabulario con una lista de valores numéricos aprendidos.
+
+En la práctica, esa lista tiene 48 valores. Se puede expresar como un vector, que es una colección ordenada de números. Todas las entradas tienen vectores del mismo tamaño. Los vectores se almacenan en una matriz, es decir, una estructura de filas y columnas. Con 3000 entradas y 48 valores por entrada, la matriz posee 3000 filas y 48 columnas.
+
+Bengio et al.~\cite{bengio2003} estudian un modelo de lenguaje que aprende representaciones distribuidas de palabras junto con sus probabilidades. Esta referencia sustenta la idea de aprender representaciones útiles para predecir, pero su arquitectura no es una LSTM. En la presente implementación, los valores de embedding se aprenden desde cero a partir de los ejemplos seleccionados. No se cargan representaciones obtenidas en otros corpus.
+
+Una representación aprendida no es una definición escrita de la palabra. El programa no almacena una explicación en español dentro de cada uno de sus 48 valores. Tampoco existe una regla que permita nombrar de antemano el significado de cada posición. Su utilidad se observa en cómo ayudan esos valores a realizar la tarea. Esto evita interpretar un vector como si fuera un registro explícito de conocimientos lingüísticos.
+
+\subsection{Modelo de lenguaje y probabilidad}
+Un modelo de lenguaje asigna probabilidades a posibles palabras o secuencias. Para la siguiente palabra, interesa la probabilidad de una candidata dado el contexto. La expresión $P(\text{palabra}\mid\text{contexto})$ se lee ``probabilidad de la palabra cuando se dispone de ese contexto''. La barra vertical separa la candidata de la información que se utiliza para estimarla; no representa una división.
+
+Una probabilidad se expresa entre 0 y 1. Al multiplicarla por 100 se obtiene un porcentaje. Un valor de 0.1377 equivale aproximadamente a 13.77\%. Todas las salidas posibles forman una distribución cuya suma es uno, salvo pequeñas diferencias de redondeo numérico. Si solo se muestran cinco palabras, sus porcentajes no tienen por qué sumar cien, porque quedan otras entradas con probabilidad asignada.
+
+Una probabilidad mayor hace que una candidata aparezca antes en el orden de sugerencias. No demuestra que sea la única continuación correcta. En lenguaje existen diferentes formas de continuar una oración. Además, los valores dependen de los textos observados y de las decisiones del modelo. Un sistema entrenado sobre noticias puede privilegiar continuaciones distintas de las que esperaría una persona que escribe mensajes informales.
+
+\subsection{Puntuaciones y conversión a probabilidades}
+La capa de salida produce una puntuación para cada entrada. Estas puntuaciones se llaman \emph{logits}. Pueden ser positivas o negativas y no son todavía porcentajes. La función softmax las transforma en probabilidades, conservando el orden de mayor a menor. Una puntuación más alta se convierte en una probabilidad más alta dentro de la distribución de ese ejemplo.
+
+\begin{equation}\label{eq:softmax}
+p_j=\frac{\exp(z_j)}{\sum_{k=1}^{V}\exp(z_k)}.
+\end{equation}
+En la ecuación~\ref{eq:softmax}, $p_j$ es la probabilidad de la entrada $j$; $z_j$ es su puntuación; $V$ es el número de entradas; $\exp$ es la función exponencial; y el signo $\sum$ indica que se suman los términos de todas las entradas. El numerador transforma la puntuación de una candidata. El denominador reúne las transformaciones de todas las candidatas. Dividir por ese total hace que las probabilidades sumen uno.
+
+Para leer el resultado no es necesario calcular manualmente las 3000 exponenciales. La biblioteca realiza esa operación. Es importante, en cambio, comprender qué cambia: las puntuaciones sin escala porcentual pasan a una distribución que puede ordenarse y evaluarse. Durante entrenamiento se utiliza una función de pérdida que recibe directamente los logits y realiza los cálculos necesarios de manera integrada.
+
+\subsection{Entrenamiento, validación y prueba}
+Los datos se dividen en tres conjuntos con funciones diferentes. Entrenamiento contiene los ejemplos con los que se actualizan parámetros. Validación permite observar el comportamiento sobre textos que no se usan para esas actualizaciones y seleccionar una versión del modelo. Prueba se reserva para medir el resultado después de cerrar las decisiones del experimento.
+
+Usar datos distintos para estas funciones reduce el riesgo de evaluar solamente la capacidad de repetir ejemplos ya utilizados para aprender. Un modelo puede ajustar muy bien el conjunto de entrenamiento y tener resultados peores en textos distintos. Esa situación se conoce como sobreajuste. Por ese motivo, un valor bajo de pérdida en entrenamiento no basta para afirmar que el sistema predice bien textos nuevos.
+
+En este trabajo se separan documentos completos. Un documento es una unidad identificada en el corpus que puede contener varias oraciones. Sus oraciones no se distribuyen entre entrenamiento y prueba. Esta decisión disminuye la posibilidad de que fragmentos del mismo documento aparezcan a ambos lados de la evaluación. No elimina todas las semejanzas posibles entre noticias distintas, limitación que se mantiene en la discusión.
+
+\subsection{Época, lote y semilla}
+Una época es una pasada completa por los objetivos de entrenamiento seleccionados. Se ejecutan cinco épocas. Esto significa que cada ejemplo seleccionado participa cinco veces en el proceso, con un orden que se reorganiza. No significa que existan cinco corpus distintos ni que al terminar se hayan creado nuevas palabras de entrenamiento.
+
+Un lote es un grupo de ejemplos procesados en una actualización. Se utiliza un tamaño de 512. Cuando el total de ejemplos no es múltiplo de 512, el último lote de la época tiene menos elementos. La pérdida de cada lote resume sus ejemplos y orienta una actualización. Al informar la pérdida de toda la época, el programa pondera cada lote por la cantidad de ejemplos que contiene.
+
+La semilla es un número que fija el inicio de ciertos procedimientos aleatorios, como la inicialización de parámetros y el orden de los ejemplos. Las semillas 17, 29 y 43 identifican tres ejecuciones por arquitectura en el estudio principal. Permiten observar si pequeñas diferencias de ejecución producen resultados distintos. No cambian el corpus ni crean tres poblaciones independientes de textos.
+
+\subsection{Inferencia}
+La inferencia es el uso de un modelo ya entrenado para obtener una predicción. En la demo, la persona escribe un contexto y el programa carga los parámetros guardados, prepara la entrada y calcula las sugerencias. No realiza entrenamiento adicional con ese texto. Una consulta no añade automáticamente las palabras nuevas al vocabulario ni modifica los pesos del archivo utilizado.
+
+Durante inferencia se desactivan operaciones que solo corresponden al entrenamiento. El modelo se configura en modo de evaluación y no necesita guardar información para calcular gradientes. Esta diferencia permite distinguir claramente dos actividades: aprender parámetros a partir de ejemplos y utilizar los parámetros ya aprendidos para responder a una entrada.
